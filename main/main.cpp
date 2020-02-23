@@ -1,6 +1,7 @@
 #include <stdio.h> 
 #include <stdlib.h> 
 #include <time.h> 
+#include "Arduino.h"
 
 uint8_t redPin = 3;
 uint8_t greenPin = 6;
@@ -52,7 +53,7 @@ void printPots(void) {
     Serial.print(pot3Val);
     Serial.print(" ");
     Serial.print(pot3Normalized);
-    Serial.print("\n");
+    Serial.print("\n\n");
 }
 
 void setup() {
