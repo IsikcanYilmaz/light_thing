@@ -15,6 +15,13 @@ uint8_t pot1Pin = A0;
 uint8_t pot2Pin = A2;
 uint8_t pot3Pin = A3;
 
+uint8_t btn1Pin = 10;
+uint8_t btn2Pin = 9;
+uint8_t btn3Pin = 8;
+uint8_t btn4Pin = 7;
+
+uint8_t btn1Val, btn2Val, btn3Val, btn4Val;
+
 uint8_t blueVal = 0;
 uint8_t greenVal = 0;
 uint8_t redVal = 0;
@@ -34,6 +41,22 @@ void readPots(void) {
   pot2Normalized = 200 * pot2Val / POT_UPPER_LIMIT;
   pot3Val = analogRead(pot3Pin);
   pot3Normalized = 200 * pot3Val / POT_UPPER_LIMIT;
+}
+
+void readBtns(void) {
+  btn1Val = digitalRead(btn1Pin);
+  btn2Val = digitalRead(btn2Pin);
+  btn3Val = digitalRead(btn3Pin);
+  btn4Val = digitalRead(btn4Pin);
+}
+
+void printBtns(void) {
+  Serial.print(btn1Val);
+  Serial.print(btn2Val);
+  Serial.print(btn3Val);
+  Serial.print(btn4Val);
+  Serial.print('\n');
+  
 }
 
 void printPots(void) {
@@ -56,13 +79,22 @@ void printPots(void) {
     Serial.print("\n\n");
 }
 
+void buttonHandler(void) {
+  
+}
+
 void setup() {
   // put your setup code here, to run once:
   
   pinMode(bluePin, OUTPUT);
   pinMode(greenPin, OUTPUT);
   pinMode(redPin, OUTPUT);
-  
+/*
+  pinMode(btn1Pin, INPUT);
+  pinMode(btn2Pin, INPUT);
+  pinMode(btn3Pin, INPUT);
+  pinMode(btn4Pin, INPUT);
+  */
   pinMode(pot1Pin, INPUT);
   pinMode(pot2Pin, INPUT);
   pinMode(pot3Pin, INPUT);
@@ -80,35 +112,13 @@ void loop() {
   while(true)
   {
     readPots();
-    printPots();
-    
-    i += direction;
-    *colors[color1]+= direction;
-    if (color1 != color2)
-    *colors[color2]+= direction;
-
-    /*
-    analogWrite(bluePin, 0);
-    analogWrite(greenPin, 0);
-    analogWrite(redPin, 0);
-    */
+    readBtns();
+    //printPots();
+    //printBtns();
     
     analogWrite(bluePin, pot1Normalized);
     analogWrite(greenPin, pot2Normalized);
     analogWrite(redPin, pot3Normalized);
-    
-    uint32_t pot1Normalized = 100 * pot1Val / POT_UPPER_LIMIT;
-
-    
-    if (i >= 100)
-    {
-      direction = -1;
-    }
-    if (i <= 0)
-    {
-      direction = 1;
-      break;
-    }
     
     delay(50);
   } 

@@ -5,7 +5,7 @@ CPP = "/usr/bin/avr-g++"
 AR = "/usr/bin/avr-ar"
 OBJ_COPY = "/usr/bin/avr-objcopy"
 
-MAIN_SKETCH = main.cpp
+MAIN_SKETCH = main.ino
 
 F_CPU = 16000000
 MCU = atmega328p
