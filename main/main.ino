@@ -1,6 +1,7 @@
 #include <stdio.h> 
 #include <stdlib.h> 
 #include <time.h> 
+#include "main.h"
 #include "Arduino.h"
 
 uint8_t redPin = 3;
@@ -56,7 +57,6 @@ void printBtns(void) {
   Serial.print(btn3Val);
   Serial.print(btn4Val);
   Serial.print('\n');
-  
 }
 
 void printPots(void) {
@@ -89,19 +89,17 @@ void setup() {
   pinMode(bluePin, OUTPUT);
   pinMode(greenPin, OUTPUT);
   pinMode(redPin, OUTPUT);
-/*
+  
   pinMode(btn1Pin, INPUT);
   pinMode(btn2Pin, INPUT);
   pinMode(btn3Pin, INPUT);
   pinMode(btn4Pin, INPUT);
-  */
+  
   pinMode(pot1Pin, INPUT);
   pinMode(pot2Pin, INPUT);
   pinMode(pot3Pin, INPUT);
 
-
   Serial.begin(9600);
-  
 }
 
 void loop() {
@@ -113,6 +111,7 @@ void loop() {
   {
     readPots();
     readBtns();
+
     //printPots();
     //printBtns();
     
