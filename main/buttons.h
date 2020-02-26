@@ -12,7 +12,7 @@ enum ButtonEventType_e {
 class ButtonEvent {
   public:
     uint8_t buttonNum;
-    ButtonEventType_e event;
+    ButtonEventType_e eventType;
 };
 
 class Button {
@@ -24,4 +24,5 @@ class Button {
 };
 
 void BU_ReadButtons(void);
+void BU_HandleButtonEvent(ButtonEvent *event);
 uint8_t BU_GetButtons(void);

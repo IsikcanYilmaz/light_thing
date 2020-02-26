@@ -5,7 +5,7 @@ template <class T>
 class Queue {
   public:
     // CONSTRUCTOR / DESTRUCTOR
-    Queue(T *queueArray):queueArray(queueArray){};
+    Queue(T *queueArray, uint16_t capacity):queueArray(queueArray), capacity(capacity){};
     ~Queue(void){};
 
     // FUNCTIONS
@@ -19,6 +19,7 @@ class Queue {
   private:
     T *queueArray;
     T *queueHeadPtr;
+    uint16_t queueHeadIndex = 0;
     uint16_t capacity;
     uint16_t size;
 };

@@ -109,11 +109,7 @@ void loop() {
   {
     readPots();
     BU_ReadButtons();
-    uint8_t buttons = BU_GetButtons();
-    Serial.print(buttons & 1 << 0);
-    Serial.print(buttons & 1 << 1);
-    Serial.print(buttons & 1 << 2);
-    Serial.print(buttons & 1 << 3);
+    //uint8_t buttons = BU_GetButtons();
     //readBtns();
 
     //printPots();
