@@ -1,0 +1,27 @@
+
+#include <stdint.h>
+
+#define NUM_BUTTONS 4
+#define BUTTON_EVENT_QUEUE_SIZE 16
+
+enum ButtonEventType_e {
+  PRESSED,
+  RELEASED,
+};
+
+class ButtonEvent {
+  public:
+    uint8_t buttonNum;
+    ButtonEventType_e event;
+};
+
+class Button {
+  public:
+    uint8_t buttonNum;
+    bool pressed;
+    ButtonEventType_e lastEvent;
+    uint32_t lastEventTimestamp;
+};
+
+void BU_ReadButtons(void);
+uint8_t BU_GetButtons(void);
