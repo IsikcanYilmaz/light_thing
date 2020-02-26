@@ -9,12 +9,11 @@ class Queue {
     ~Queue(void){};
 
     // FUNCTIONS
-    void push(T element);
+    void push(T *element);
     T pop(void);
     uint16_t getNumElements(void);
     bool isEmpty(void);
     
-  
   
   private:
     T *queueArray;

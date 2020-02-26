@@ -4,10 +4,13 @@
 #include "HardwareSerial.h"
 #include <string.h>
 
+// PUSH
+// Takes pointer to object of template class T
+// Copies the contents to head of queueArray
 template <class T>
-void Queue<T>::push(T element) {
+void Queue<T>::push(T *element) {
   if (this->size < this->capacity) {
-    memcpy(&queueArray[queueHeadIndex], &element, sizeof(T));
+    memcpy(queueArray[queueHeadIndex], &element, sizeof(T));
     Serial.print("Pushing element. objdump: ");
     Serial.println(((ButtonEvent *) &element)->buttonNum);
     //queueArray[queueHeadIndex] = element;
@@ -18,8 +21,7 @@ void Queue<T>::push(T element) {
 }
 
 // POP 
-// Returns pointer of the front element of the queue
-// TODO should this return the object itself and not a ptr?
+// Returns the element at the head of the queueArray
 template <class T>
 T Queue<T>::pop(void) 
 {
@@ -31,6 +33,7 @@ T Queue<T>::pop(void)
   return ret;
 }
 
+// Returns current size of the queue
 template <class T>
 uint16_t Queue<T>::getNumElements(void) 
 {

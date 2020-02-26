@@ -19,7 +19,7 @@ void BU_EnqueueButtonEvent(uint16_t buttonNum, ButtonEventType_e event) {
   ButtonEvent e;
   e.buttonNum = buttonNum;
   e.eventType = event;
-  buttonEventQueue.push(e);
+  buttonEventQueue.push(&e);
 }
 
 // THIS IS TO RUN EVERY 1ms
