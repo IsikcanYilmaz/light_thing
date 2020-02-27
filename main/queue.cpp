@@ -10,10 +10,8 @@
 template <class T>
 void Queue<T>::push(T *element) {
   if (this->size < this->capacity) {
-    memcpy(queueArray[queueHeadIndex], &element, sizeof(T));
-    Serial.print("Pushing element. objdump: ");
+    memcpy(&queueArray[queueHeadIndex], &element, sizeof(T));
     Serial.println(((ButtonEvent *) &element)->buttonNum);
-    //queueArray[queueHeadIndex] = element;
     queueHeadPtr++;
     size++;
     queueHeadIndex++;
