@@ -41,6 +41,14 @@ int8_t direction = 1;
 
 char printBuffer[SERIAL_PRINT_BUFFER_LEN];
 
+LEDPlayer bluePlayer;
+//LEDPlayer greenPlayer;
+//LEDPlayer redPlayer;
+
+//LEDPlayer *ledPlayers[3] = {&bluePlayer, &greenPlayer, &redPlayer};
+
+uint8_t mode;
+
 void readPots(void) {
   pot1Val = analogRead(pot1Pin);
   pot1Normalized = 200 * pot1Val / POT_UPPER_LIMIT;
@@ -80,6 +88,7 @@ void printPots(void) {
 
 void setup() {
   // put your setup code here, to run once:
+  noInterrupts();
 
   pinMode(bluePin, OUTPUT);
   pinMode(greenPin, OUTPUT);
@@ -97,6 +106,7 @@ void setup() {
   Serial.begin(9600);
 
   Serial.print("Initialized\n");
+  interrupts();
 }
 
 void loop() {
@@ -104,7 +114,6 @@ void loop() {
   uint8_t color1 = (rand() % (2 - 0 + 1)) + 0; 
   uint8_t color2 = (rand() % (2 - 0 + 1)) + 0; 
 
-  testfun();
   while(true)
   {
     readPots();
@@ -119,7 +128,30 @@ void loop() {
     analogWrite(greenPin, pot2Normalized);
     analogWrite(redPin, pot3Normalized);
 
-    delay(50);
+    delay(1);
   } 
 
+}
+
+void changeMode(void)
+{
+  mode++;
+  mode = mode % NUM_MODES;
+  Serial.print("Mode changed to ");
+  Serial.println(mode);
+}
+
+void doRecording(void)
+{
+  
+}
+
+void startRecording(uint8_t channel)
+{
+  // https://www.instructables.com/id/Arduino-Timer-Interrupts/
+}
+
+void stopRecording(uint8_t channel)
+{
+  
 }

@@ -6,6 +6,17 @@
 #include "HardwareSerial.h"
 
 
+ButtonMap_t buttonMap[] = {
+  {7, PRESSED, NULL},
+  {7, RELEASED, NULL},
+  {8, PRESSED, NULL},
+  {8, RELEASED, NULL},
+  {9, PRESSED, NULL},
+  {9, RELEASED, NULL},
+  {10, PRESSED, NULL},
+  {10, RELEASED, NULL}
+};
+
 uint8_t buttonPins[NUM_BUTTONS] = {10, 9, 8, 7};
 uint16_t buttonsBitField = 0;
 
@@ -14,6 +25,7 @@ Queue<ButtonEvent> buttonEventQueue = Queue<ButtonEvent>(&_buttonEventQueue[0], 
 
 void BU_Init(void){
 }
+
 
 void BU_EnqueueButtonEvent(uint16_t buttonNum, ButtonEventType_e event) {
   ButtonEvent e;
@@ -59,12 +71,12 @@ void BU_HandleButtonEvent(ButtonEvent *event) {
   switch (event->eventType) {
   case PRESSED: 
     {
-
+      // TODO // HANDLE DEBOUNCE
     }
     break;
   case RELEASED:
     {
-
+      // TODO // HANDLE DEBOUNCE
     }
     break;
   default:

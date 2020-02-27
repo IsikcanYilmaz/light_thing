@@ -15,6 +15,12 @@ class ButtonEvent {
     ButtonEventType_e eventType;
 };
 
+typedef struct ButtonMap {
+  uint8_t buttonNum;
+  ButtonEventType_e event;
+  void * func;
+}ButtonMap_t;
+
 class Button {
   public:
     uint8_t buttonNum;
