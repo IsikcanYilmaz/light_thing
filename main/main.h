@@ -9,10 +9,14 @@ enum Modes {
 };
 
 
-void changeMode(void);
 void startRecording(uint8_t channel);
 void stopRecording(uint8_t channel);
 void toggleRecording(uint8_t channel);
+
+// MODE STUFF
+void changeMode(void);
+void initializeMode(enum Modes m);
+void deinitializeMode(enum Modes m);
 
 // HARDWARE TIMER STUFF
 void initializeTimer1(uint16_t freq);

@@ -14,9 +14,9 @@ const uint8_t bluePin = 5;
 
 const uint8_t onboardLedPin = 13;
 
-const uint8_t pot1Pin = A0;
-const uint8_t pot2Pin = A2;
-const uint8_t pot3Pin = A3;
+const uint8_t pot1Pin = A0; // BLUE
+const uint8_t pot2Pin = A2; // GREEN
+const uint8_t pot3Pin = A3; // RED
 
 const uint8_t btn1Pin = 10;
 const uint8_t btn2Pin = 9;
@@ -48,6 +48,8 @@ LEDPlayer redPlayer;
 LEDPlayer *ledPlayers[3] = {&bluePlayer, &greenPlayer, &redPlayer};
 
 uint8_t mode;
+
+
 
 void readPots(void) {
   pot1Val = analogRead(pot1Pin);
@@ -108,36 +110,28 @@ void setup() {
   Serial.print("Initialized\n");
 }
 
+// MAIN LOOP //
 void loop() {
-  // Pick 2 colors
-  uint8_t color1 = (rand() % (2 - 0 + 1)) + 0; 
-  uint8_t color2 = (rand() % (2 - 0 + 1)) + 0; 
 
-  while(true)
+  BU_ReadButtons();
+  switch (mode){
+  case DIRECT_PLAY:
   {
     readPots();
-    BU_ReadButtons();
-    //uint8_t buttons = BU_GetButtons();
-    //readBtns();
-
-    //printPots();
-    //printBtns();
-
     analogWrite(bluePin, pot1Normalized);
     analogWrite(greenPin, pot2Normalized);
     analogWrite(redPin, pot3Normalized);
-
     delay(1);
+    break;
   } 
-
-}
-
-void changeMode(void)
-{
-  mode++;
-  mode = mode % NUM_MODES;
-  Serial.print("Mode changed to ");
-  Serial.println(mode);
+  case RECORD_PLAY:
+  {
+    delay(0xffff);
+    break;
+  }
+  defailt:
+    break;
+  }
 }
 
 void doRecording(void)
@@ -171,6 +165,62 @@ void toggleRecording(uint8_t channel)
     startRecording(channel);
   }
 }
+
+/*
+ *
+ * MODE RELATED
+ */
+
+// Currently there are two modes.
+// Mode 0, DIRECT_PLAY just reads the knobs and lights the rgbs accordingly
+// Mode 1, RECORD_PLAY is where you get to record and play the recording
+// 
+void changeMode(void)
+{
+  noInterrupts();
+  deinitializeMode((Modes) mode);
+  mode++;
+  mode = mode % NUM_MODES;
+  initializeMode((Modes) mode);
+  Serial.print("Mode changed to ");
+  Serial.println(mode);
+  interrupts();
+}
+
+void initializeMode(enum Modes m)
+{
+  switch(m)
+  {
+    case DIRECT_PLAY:
+    {
+      break;
+    }
+    case RECORD_PLAY:
+    {
+      initializeTimer1(PLAYER_SAMPLE_RATE);
+      startTimer1();
+      bluePlayer.setRecording(true);
+      break;
+    }
+  }
+}
+
+void deinitializeMode(enum Modes m)
+{
+  switch(m)
+  {
+    case DIRECT_PLAY:
+    {
+      break;
+    }
+    case RECORD_PLAY:
+    {
+      stopTimer1();
+      break;
+    }
+  }
+}
+
 
 /*
  *
@@ -230,7 +280,37 @@ void stopTimer1(void)
 // TIMER 1 ISR
 ISR(TIMER1_COMPA_vect)
 {
-  static bool toggle = false;
-  digitalWrite(onboardLedPin, (toggle ? HIGH : LOW));
-  toggle = !toggle;
+  //static bool toggle = false;
+  //digitalWrite(onboardLedPin, (toggle ? HIGH : LOW));
+  //toggle = !toggle;
+  static uint16_t blueIndex = 0;
+  static uint16_t redIndex = 0;
+  static uint16_t greenIndex = 0;
+  BU_ReadButtons();
+
+  digitalWrite(onboardLedPin, HIGH);
+  if (!bluePlayer.isFull()) 
+  {
+    readPots();
+    bluePlayer.recordSample((uint16_t)pot1Normalized);
+    greenPlayer.recordSample((uint16_t)pot2Normalized);
+    redPlayer.recordSample((uint16_t)pot3Normalized);
+    analogWrite(bluePin, pot1Normalized);
+    analogWrite(greenPin, pot2Normalized);
+    analogWrite(redPin, pot3Normalized);
+    digitalWrite(onboardLedPin, LOW);
+  }
+  else
+  {
+    /*
+    stopTimer1();
+    Serial.println("RECORD FINISHED");
+    Serial.println(bluePlayer.isRecording());
+    Serial.println(bluePlayer.getCurrentLength());
+    */
+    analogWrite(bluePin, bluePlayer.getSample(blueIndex));
+    analogWrite(greenPin, greenPlayer.getSample(blueIndex));
+    analogWrite(redPin, redPlayer.getSample(blueIndex));
+    blueIndex = (blueIndex + 1) % PLAYER_RECORDING_CAPACITY;
+  }
 }
