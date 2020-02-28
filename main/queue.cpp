@@ -10,8 +10,7 @@
 template <class T>
 void Queue<T>::push(T *element) {
   if (this->size < this->capacity) {
-    memcpy(&queueArray[queueHeadIndex], &element, sizeof(T));
-    Serial.println(((ButtonEvent *) &element)->buttonNum);
+    memcpy(&queueArray[queueHeadIndex], element, sizeof(T));
     queueHeadPtr++;
     size++;
     queueHeadIndex++;

@@ -1,5 +1,3 @@
-#include <stdio.h> 
-#include <stdlib.h> 
 #include <time.h> 
 #include "main.h"
 #include "buttons.h"
@@ -13,6 +11,8 @@
 const uint8_t redPin = 3;
 const uint8_t greenPin = 6;
 const uint8_t bluePin = 5;
+
+const uint8_t onboardLedPin = 13;
 
 const uint8_t pot1Pin = A0;
 const uint8_t pot2Pin = A2;
@@ -42,10 +42,10 @@ int8_t direction = 1;
 char printBuffer[SERIAL_PRINT_BUFFER_LEN];
 
 LEDPlayer bluePlayer;
-//LEDPlayer greenPlayer;
-//LEDPlayer redPlayer;
+LEDPlayer greenPlayer;
+LEDPlayer redPlayer;
 
-//LEDPlayer *ledPlayers[3] = {&bluePlayer, &greenPlayer, &redPlayer};
+LEDPlayer *ledPlayers[3] = {&bluePlayer, &greenPlayer, &redPlayer};
 
 uint8_t mode;
 
@@ -88,11 +88,11 @@ void printPots(void) {
 
 void setup() {
   // put your setup code here, to run once:
-  noInterrupts();
 
   pinMode(bluePin, OUTPUT);
   pinMode(greenPin, OUTPUT);
   pinMode(redPin, OUTPUT);
+  pinMode(onboardLedPin, OUTPUT);
 
   pinMode(btn1Pin, INPUT);
   pinMode(btn2Pin, INPUT);
@@ -106,7 +106,6 @@ void setup() {
   Serial.begin(9600);
 
   Serial.print("Initialized\n");
-  interrupts();
 }
 
 void loop() {
@@ -149,9 +148,89 @@ void doRecording(void)
 void startRecording(uint8_t channel)
 {
   // https://www.instructables.com/id/Arduino-Timer-Interrupts/
+  Serial.print("START RECORDING CH ");
+  Serial.println(channel);
+  ledPlayers[channel]->setRecording(true);
 }
 
 void stopRecording(uint8_t channel)
 {
+  Serial.print("STOP RECORDING CH ");
+  Serial.println(channel);
+  ledPlayers[channel]->setRecording(false);
+}
+
+void toggleRecording(uint8_t channel)
+{
+  if (ledPlayers[channel]->isRecording())
+  {
+    stopRecording(channel);
+  }
+  else
+  {
+    startRecording(channel);
+  }
+}
+
+/*
+ *
+ * TIMER RELATED
+ */
   
+// Arduino clock runs at 16MHz
+// At 16MHz each tick of the counter is 1/16000000 (~63 ns)
+// In many cases, 16MHz is too fast. 
+// This chip has 2 8 bit timers and a 16 bit timer
+//
+// When counter reaches maximum, it rolls back to zero,
+// called an overflow. Change the speed of this counting up 
+// via a prescaler. 
+//
+// timer speed in Hz = 16MHz / prescaler
+//
+// So a 1 prescaler will increment the counter at 16MHz, 8 will
+// increment at 2, and so on. Prescaler can only be a power of 8.
+//
+// interrupt frequency in Hz = 16MHz / (prescaler * (compare match register + 1))
+// the +1 is there because the compare match register is zero indexed
+//
+// Rearranging this equation will get you the value needed in the 
+// compare match register = [ 16MHz / (prescaler * interrupt frequency) ] - 1
+
+void initializeTimer1(uint16_t freq)
+{
+  // Initialize timers
+  noInterrupts();
+  uint16_t prescaler = 1024;
+  uint16_t compMatchReg = (16000000 / (prescaler * freq)) - 1; 
+  
+  // Initialize Timer 1, the 16 bit timer
+  // Since the compMatchReg value is larger than 255, we'll need to use the 16bit 
+  // timer to do both the recording and the playing
+  TCCR1A = 0; // Set the entire timer control register A to 0
+  TCCR1B = 0; // same for B
+  TCNT1  = 0; // counter = 0
+  OCR1A  = compMatchReg; // set compare match register for 1Hz increments
+  TCCR1B |= (1 << WGM12); // turn on ctc mode (clear timer on compare)
+  //TCCR1B |= (1 << CS12) | (1 << CS10); // set cs10 and cs12 bits for 1024 prescaler
+  TIMSK1 |= (1 << OCIE1A); // enable timer compare interrupt
+  interrupts();
+}
+
+void startTimer1(void)
+{
+  TCCR1B |= (1 << CS12) | (1 << CS10); // set cs10 and cs12 bits for 1024 prescaler
+}
+
+void stopTimer1(void)
+{
+  TCCR1B = 0; // unset clock source setting of timer 1 
+}
+
+// TIMER 1 ISR
+ISR(TIMER1_COMPA_vect)
+{
+  static bool toggle = false;
+  digitalWrite(onboardLedPin, (toggle ? HIGH : LOW));
+  toggle = !toggle;
 }

@@ -48,9 +48,6 @@ void BU_ReadButtons(void) {
       
       // Enqueue event to be processed after this loop
       BU_EnqueueButtonEvent(i, eventType);
-
-      Serial.print("EVENT ");
-      Serial.println(eventType);
     }
     tmpButtonsBitField |= currentReading << i;
   }
@@ -67,16 +64,29 @@ void BU_HandleButtonEvent(ButtonEvent *event) {
   Serial.print("Button: ");
   Serial.print(event->buttonNum);
   Serial.print(" Type: ");
-  Serial.println((uint8_t) event->eventType);
+  Serial.print((uint8_t) event->eventType);
   switch (event->eventType) {
   case PRESSED: 
     {
       // TODO // HANDLE DEBOUNCE
+      Serial.println(" PRESSED");
     }
     break;
   case RELEASED:
     {
       // TODO // HANDLE DEBOUNCE
+      // TODO // DO THIS THRU THE LOOK UP TABLE
+      // TODO // GENERAL BUTTONS POLISH
+      if (event->buttonNum > 0)
+      {
+        Serial.println(" RELEASED");
+        toggleRecording(0);
+      } 
+      else
+      {
+        Serial.println("\nCHANGING MODE");
+        changeMode();
+      }
     }
     break;
   default:

@@ -1,7 +1,7 @@
 
 
 #define PLAYER_SAMPLE_RATE 30 // Hz
-#define PLAYER_RECORDING_LENGTH 10 // Seconds
+#define PLAYER_RECORDING_LENGTH 5 // Seconds
 
 #include <stdint.h>
 
@@ -13,6 +13,7 @@ class LEDPlayer {
     uint16_t getSample(uint16_t idx);
     void reset(void);
     bool isRecording(void);
+    void setRecording(bool r);
 
 
   private:

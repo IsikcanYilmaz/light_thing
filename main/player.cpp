@@ -19,19 +19,32 @@ LEDPlayer::isRecording(void)
 }
 
 void
+LEDPlayer::setRecording(bool r)
+{
+  recording = r;
+}
+
+void
 LEDPlayer::recordSample(uint16_t val)
 {
-  recSpace[recSpaceHeadIdx] = val;
-  recSpaceHeadIdx++;
+  if (recSpaceHeadIdx < sizeof(recSpace))
+  {
+    recSpace[recSpaceHeadIdx] = val;
+    recSpaceHeadIdx++;
+  }
 }
 
 uint16_t
 LEDPlayer::getSample(uint16_t idx)
 {
   if (idx < sizeof(recSpace))
+  {
     return recSpace[idx];
+  }
   else
+  {
     return 0;
+  }
 }
 
 void
