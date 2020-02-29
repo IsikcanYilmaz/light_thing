@@ -19,7 +19,7 @@ LEDPlayer::isRecording(void)
 }
 
 void
-LEDPlayer::setRecording(bool r)
+LEDPlayer::enableRecording(bool r)
 {
   recording = r;
 }

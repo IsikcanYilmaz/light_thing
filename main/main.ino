@@ -7,6 +7,8 @@
 
 #define POT_UPPER_LIMIT 713 
 
+#define NUM_CHANNELS 3 
+
 #define SERIAL_PRINT_BUFFER_LEN 64
 
 const uint8_t redPin = 3;
@@ -24,9 +26,9 @@ const uint8_t btn2Pin = 9;
 const uint8_t btn3Pin = 8;
 const uint8_t btn4Pin = 7;
 
-uint32_t pot1Val, pot1Normalized;
-uint32_t pot2Val, pot2Normalized;
-uint32_t pot3Val, pot3Normalized;
+volatile uint32_t pot1Val, pot1Normalized;
+volatile uint32_t pot2Val, pot2Normalized;
+volatile uint32_t pot3Val, pot3Normalized;
 
 uint8_t btn1Val, btn2Val, btn3Val, btn4Val;
 
@@ -46,7 +48,7 @@ LEDPlayer bluePlayer;
 LEDPlayer greenPlayer;
 LEDPlayer redPlayer;
 
-LEDPlayer *ledPlayers[3] = {&bluePlayer, &greenPlayer, &redPlayer};
+LEDPlayer *ledPlayers[NUM_CHANNELS] = {&bluePlayer, &greenPlayer, &redPlayer};
 
 uint8_t mode;
 
@@ -54,11 +56,11 @@ uint8_t mode;
 
 void readPots(void) {
   pot1Val = analogRead(pot1Pin);
-  pot1Normalized = 200 * pot1Val / POT_UPPER_LIMIT;
+  pot1Normalized = 100 * pot1Val / POT_UPPER_LIMIT;
   pot2Val = analogRead(pot2Pin);
-  pot2Normalized = 200 * pot2Val / POT_UPPER_LIMIT;
+  pot2Normalized = 100 * pot2Val / POT_UPPER_LIMIT;
   pot3Val = analogRead(pot3Pin);
-  pot3Normalized = 200 * pot3Val / POT_UPPER_LIMIT;
+  pot3Normalized = 100 * pot3Val / POT_UPPER_LIMIT;
 }
 
 void printBtns(void) {
@@ -146,14 +148,14 @@ void startRecording(uint8_t channel)
   // https://www.instructables.com/id/Arduino-Timer-Interrupts/
   Serial.print("START RECORDING CH ");
   Serial.println(channel);
-  ledPlayers[channel]->setRecording(true);
+  ledPlayers[channel]->enableRecording(true);
 }
 
 void stopRecording(uint8_t channel)
 {
   Serial.print("STOP RECORDING CH ");
   Serial.println(channel);
-  ledPlayers[channel]->setRecording(false);
+  ledPlayers[channel]->enableRecording(false);
 }
 
 void toggleRecording(uint8_t channel)
@@ -201,7 +203,11 @@ void initializeMode(enum Modes m)
     {
       initializeTimer1(PLAYER_SAMPLE_RATE);
       startTimer1();
-      bluePlayer.setRecording(true);
+      for (int i = 0; 0 < NUM_CHANNELS; i++)
+      {
+        ledPlayers[i]->reset();
+        ledPlayers[i]->enableRecording(true);
+      }
       break;
     }
     case SINE_PLAY:
@@ -288,16 +294,43 @@ void stopTimer1(void)
 // TIMER 1 ISR
 ISR(TIMER1_COMPA_vect)
 {
+  readPots();
   if (mode == SINE_PLAY)
   {
-    static uint32_t phase = 0;
-    float SINE_FREQ = 1;
-    uint8_t val = (uint8_t) (sin(2 * PI * SINE_FREQ * phase) * 50 + 50);
-    phase += TIME_STEP;
-    //bluePlayer.recordSample(val);
-    //redPlayer.recordSample(100-val);
-    analogWrite(bluePin, val);
-    analogWrite(redPin, 100 - val);
+    const float TIME_STEP = 1.0f / (float) PLAYER_SAMPLE_RATE;
+
+    static float bluePhase = 3 * PI;
+    static float greenPhase = 0;
+    static float redPhase = PI;
+
+    /*
+    float blueFreq = (float) pot1Normalized / 100.0;
+    float greenFreq = (float) pot2Normalized / 100.0;
+    float redFreq = (float) pot3Normalized / 100.0;
+    */
+
+    float blueFreq = 0.1;
+    float greenFreq = 0.3;
+    float redFreq = 0.5;
+  
+    /*
+    Serial.println(blueFreq);
+    Serial.println(greenFreq);
+    Serial.println(redFreq);
+    Serial.print("\n");
+    */
+
+    uint8_t blueVal  = (uint8_t) (sin(2 * PI * blueFreq * bluePhase) * 50 + 50);
+    uint8_t greenVal = (uint8_t) (sin(2 * PI * greenFreq * greenPhase) * 50 + 50);
+    uint8_t redVal   = (uint8_t) (sin(2 * PI * redFreq * redPhase) * 50 + 50);
+
+    bluePhase += TIME_STEP;
+    greenPhase += TIME_STEP;
+    redPhase += TIME_STEP;
+
+    analogWrite(bluePin, blueVal);
+    analogWrite(redPin, redVal);
+    analogWrite(greenPin, greenVal);
     return;
   }
   //static bool toggle = false;
