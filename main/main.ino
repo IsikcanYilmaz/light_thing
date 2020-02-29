@@ -1,4 +1,5 @@
 #include <time.h> 
+#include <math.h>
 #include "main.h"
 #include "buttons.h"
 #include "player.h"
@@ -107,6 +108,7 @@ void setup() {
 
   Serial.begin(9600);
 
+  initializeMode((Modes) mode);
   Serial.print("Initialized\n");
 }
 
@@ -117,7 +119,7 @@ void loop() {
   switch (mode){
   case DIRECT_PLAY:
   {
-    readPots();
+    readPots(); // TODO MOVE THIS TO ISR AND DEPRICATE THIS FUNCTION ENTIRELY
     analogWrite(bluePin, pot1Normalized);
     analogWrite(greenPin, pot2Normalized);
     analogWrite(redPin, pot3Normalized);
@@ -126,17 +128,17 @@ void loop() {
   } 
   case RECORD_PLAY:
   {
-    delay(0xffff);
+    delay(0xffff); // DO THINGS IN THE ISR. TODO DELET DIS
+    break;
+  }
+  case SINE_PLAY:
+  {
+    delay(0xffff); // DO THINGS IN THE ISR. TODO DELET DIS
     break;
   }
   defailt:
     break;
   }
-}
-
-void doRecording(void)
-{
-  
 }
 
 void startRecording(uint8_t channel)
@@ -174,7 +176,7 @@ void toggleRecording(uint8_t channel)
 // Currently there are two modes.
 // Mode 0, DIRECT_PLAY just reads the knobs and lights the rgbs accordingly
 // Mode 1, RECORD_PLAY is where you get to record and play the recording
-// 
+// Mode 2, SINE_PLAY record a bunch of sine waves and play them
 void changeMode(void)
 {
   noInterrupts();
@@ -200,6 +202,12 @@ void initializeMode(enum Modes m)
       initializeTimer1(PLAYER_SAMPLE_RATE);
       startTimer1();
       bluePlayer.setRecording(true);
+      break;
+    }
+    case SINE_PLAY:
+    {
+      initializeTimer1(PLAYER_SAMPLE_RATE);
+      startTimer1();
       break;
     }
   }
@@ -280,6 +288,18 @@ void stopTimer1(void)
 // TIMER 1 ISR
 ISR(TIMER1_COMPA_vect)
 {
+  if (mode == SINE_PLAY)
+  {
+    static uint32_t phase = 0;
+    float SINE_FREQ = 1;
+    uint8_t val = (uint8_t) (sin(2 * PI * SINE_FREQ * phase) * 50 + 50);
+    phase += TIME_STEP;
+    //bluePlayer.recordSample(val);
+    //redPlayer.recordSample(100-val);
+    analogWrite(bluePin, val);
+    analogWrite(redPin, 100 - val);
+    return;
+  }
   //static bool toggle = false;
   //digitalWrite(onboardLedPin, (toggle ? HIGH : LOW));
   //toggle = !toggle;
@@ -303,11 +323,11 @@ ISR(TIMER1_COMPA_vect)
   else
   {
     /*
-    stopTimer1();
-    Serial.println("RECORD FINISHED");
-    Serial.println(bluePlayer.isRecording());
-    Serial.println(bluePlayer.getCurrentLength());
-    */
+       stopTimer1();
+       Serial.println("RECORD FINISHED");
+       Serial.println(bluePlayer.isRecording());
+       Serial.println(bluePlayer.getCurrentLength());
+     */
     analogWrite(bluePin, bluePlayer.getSample(blueIndex));
     analogWrite(greenPin, greenPlayer.getSample(blueIndex));
     analogWrite(redPin, redPlayer.getSample(blueIndex));

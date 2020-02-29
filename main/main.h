@@ -1,9 +1,12 @@
 #include <stdio.h> 
 #include <stdlib.h> 
 #include <stdint.h>
+#include "common.h"
+
 
 enum Modes {
-  DIRECT_PLAY = 0,
+  SINE_PLAY = 0,
+  DIRECT_PLAY,
   RECORD_PLAY,
   NUM_MODES
 };
