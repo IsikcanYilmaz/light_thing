@@ -1,7 +1,7 @@
 
 
-#define PLAYER_SAMPLE_RATE 50 // Hz
-#define PLAYER_RECORDING_LENGTH 5 // Seconds
+#define PLAYER_SAMPLE_RATE 100 // Hz
+#define PLAYER_RECORDING_LENGTH 1 // Seconds
 #define PLAYER_RECORDING_CAPACITY (PLAYER_SAMPLE_RATE * PLAYER_RECORDING_LENGTH) // uint16_ts 
 
 #include <stdint.h>

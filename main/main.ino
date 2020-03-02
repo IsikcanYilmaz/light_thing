@@ -216,6 +216,12 @@ void initializeMode(enum Modes m)
       startTimer1();
       break;
     }
+    case RANDOM_PLAY:
+    {
+      initializeTimer1(PLAYER_SAMPLE_RATE);
+      startTimer1();
+      break;
+    }
   }
 }
 
@@ -291,10 +297,47 @@ void stopTimer1(void)
   TCCR1B = 0; // unset clock source setting of timer 1 
 }
 
+#define USE_AMPLITUDE_CHUNK 1
 // TIMER 1 ISR
 ISR(TIMER1_COMPA_vect)
 {
   readPots();
+  if (mode == RANDOM_PLAY)
+  {
+    static int amplitudeChunk = 899;
+    static float amplitude[3]  = {0, 0, 0}; // amplitude (0 - 100)
+    static float rate[3]       = {0, 0, 0}; // Hz
+    static float target[3]     = {0, 0, 0}; // Hz
+
+    for (int i = 0; i < 3; i++)
+    {
+      // Increment or decrement our amplitude with the rate of change (time step)
+      (amplitude[i] < target[i]) ? (amplitude[i] += rate[i]) : (amplitude[i] -= rate[i]);
+
+      // Check if we're done. if we're done, find new target and rate
+      if (abs(amplitude[i] - target[i]) > rate[i])
+      {
+        continue;
+      }
+
+      // Target reached. find/set new target and rate
+      #if USE_AMPLITUDE_CHUNK
+      amplitudeChunk += target[i];
+      float newTarget = ((rand() % ((1000 - amplitudeChunk) - 0 + 1) + 0) / 10.0); //(rand() % (upper - lower + 1)) + lower;
+      amplitudeChunk -= newTarget;
+      #else
+      float newTarget = ((rand() % (1000 - 0 + 1) + 0) / 10.0); //(rand() % (upper - lower + 1)) + lower;
+      #endif
+      float newRate = ((rand() % (1000 - 500 + 1) + 500) / 1000.0); //(rand() % (upper - lower + 1)) + lower;
+      target[i] = newTarget;
+      rate[i] = newRate;
+    }
+
+    analogWrite(bluePin, (uint8_t) amplitude[0]);
+    analogWrite(redPin, (uint8_t) amplitude[1]);
+    analogWrite(greenPin, (uint8_t) amplitude[2]);
+    return;
+  }
   if (mode == SINE_PLAY)
   {
     const float TIME_STEP = 1.0f / (float) PLAYER_SAMPLE_RATE;
@@ -309,9 +352,11 @@ ISR(TIMER1_COMPA_vect)
     float redFreq = (float) pot3Normalized / 100.0;
     */
 
-    float blueFreq = 0.1;
-    float greenFreq = 0.3;
-    float redFreq = 0.5;
+    float blueFreq = 0.05;
+    float greenFreq = 0.15;
+    float redFreq = 0.25;
+
+    float overallFreqMultiplier = 4;
   
     /*
     Serial.println(blueFreq);
@@ -320,16 +365,16 @@ ISR(TIMER1_COMPA_vect)
     Serial.print("\n");
     */
 
-    uint8_t blueVal  = (uint8_t) (sin(2 * PI * blueFreq * bluePhase) * 50 + 50);
-    uint8_t greenVal = (uint8_t) (sin(2 * PI * greenFreq * greenPhase) * 50 + 50);
-    uint8_t redVal   = (uint8_t) (sin(2 * PI * redFreq * redPhase) * 50 + 50);
+    uint8_t blueVal  = (uint8_t) (sin(2 * PI * blueFreq * bluePhase * overallFreqMultiplier) * 50 + 50);
+    uint8_t greenVal = (uint8_t) (sin(2 * PI * greenFreq * greenPhase * overallFreqMultiplier) * 50 + 50);
+    uint8_t redVal   = (uint8_t) (sin(2 * PI * redFreq * redPhase * overallFreqMultiplier) * 50 + 50);
 
     bluePhase += TIME_STEP;
     greenPhase += TIME_STEP;
     redPhase += TIME_STEP;
 
     analogWrite(bluePin, blueVal);
-    analogWrite(redPin, redVal);
+    //analogWrite(redPin, redVal);
     analogWrite(greenPin, greenVal);
     return;
   }

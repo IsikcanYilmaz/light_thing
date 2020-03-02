@@ -5,7 +5,8 @@
 
 
 enum Modes {
-  SINE_PLAY = 0,
+  RANDOM_PLAY = 0,
+  SINE_PLAY,
   DIRECT_PLAY,
   RECORD_PLAY,
   NUM_MODES
