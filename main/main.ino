@@ -233,6 +233,8 @@ void deinitializeMode(enum Modes m)
     {
       break;
     }
+    case SINE_PLAY:
+    case RANDOM_PLAY:
     case RECORD_PLAY:
     {
       stopTimer1();
@@ -308,6 +310,7 @@ ISR(TIMER1_COMPA_vect)
     static float amplitude[3]  = {0, 0, 0}; // amplitude (0 - 100)
     static float rate[3]       = {0, 0, 0}; // Hz
     static float target[3]     = {0, 0, 0}; // Hz
+    static uint32_t  wait[3]   = {0, 0, 0}; // Samples (Seconds * sampleRate)
 
     for (int i = 0; i < 3; i++)
     {
@@ -320,15 +323,24 @@ ISR(TIMER1_COMPA_vect)
         continue;
       }
 
+      // If there's waiting to be done, wait
+      if (wait[i])
+      {
+        wait[i]--;
+        continue;
+      }
+
       // Target reached. find/set new target and rate
       #if USE_AMPLITUDE_CHUNK
       amplitudeChunk += target[i];
-      float newTarget = ((rand() % ((1000 - amplitudeChunk) - 0 + 1) + 0) / 10.0); //(rand() % (upper - lower + 1)) + lower;
+      float newTarget = ((rand() % ((999 - amplitudeChunk) - 0 + 1) + 0) / 10.0); //(rand() % (upper - lower + 1)) + lower;
       amplitudeChunk -= newTarget;
       #else
-      float newTarget = ((rand() % (1000 - 0 + 1) + 0) / 10.0); //(rand() % (upper - lower + 1)) + lower;
+      float newTarget = ((rand() % (999 - 0 + 1) + 0) / 10.0); //(rand() % (upper - lower + 1)) + lower;
       #endif
-      float newRate = ((rand() % (1000 - 500 + 1) + 500) / 1000.0); //(rand() % (upper - lower + 1)) + lower;
+      float newRate = ((rand() % (1500 - 100 + 1) + 100) / 1000.0); //(rand() % (upper - lower + 1)) + lower;
+      uint32_t newWait = ((rand() % (3 - 0 + 1) + 0) * PLAYER_SAMPLE_RATE);
+      wait[i] = newWait; 
       target[i] = newTarget;
       rate[i] = newRate;
     }
@@ -342,30 +354,16 @@ ISR(TIMER1_COMPA_vect)
   {
     const float TIME_STEP = 1.0f / (float) PLAYER_SAMPLE_RATE;
 
-    static float bluePhase = 3 * PI;
+    static float bluePhase = 0;
     static float greenPhase = 0;
-    static float redPhase = PI;
-
-    /*
-    float blueFreq = (float) pot1Normalized / 100.0;
-    float greenFreq = (float) pot2Normalized / 100.0;
-    float redFreq = (float) pot3Normalized / 100.0;
-    */
+    static float redPhase = 0;
 
     float blueFreq = 0.05;
-    float greenFreq = 0.15;
+    float greenFreq = 0.25;
     float redFreq = 0.25;
 
     float overallFreqMultiplier = 4;
-  
-    /*
-    Serial.println(blueFreq);
-    Serial.println(greenFreq);
-    Serial.println(redFreq);
-    Serial.print("\n");
-    */
-
-    uint8_t blueVal  = (uint8_t) (sin(2 * PI * blueFreq * bluePhase * overallFreqMultiplier) * 50 + 50);
+    uint8_t blueVal  = (uint8_t) (sin(2 * PI * blueFreq * bluePhase * overallFreqMultiplier) * 50 + 50) + 1;
     uint8_t greenVal = (uint8_t) (sin(2 * PI * greenFreq * greenPhase * overallFreqMultiplier) * 50 + 50);
     uint8_t redVal   = (uint8_t) (sin(2 * PI * redFreq * redPhase * overallFreqMultiplier) * 50 + 50);
 
