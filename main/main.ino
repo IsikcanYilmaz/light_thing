@@ -299,7 +299,9 @@ void stopTimer1(void)
   TCCR1B = 0; // unset clock source setting of timer 1 
 }
 
-#define USE_AMPLITUDE_CHUNK 1
+#define CONFIG_RANDOM_PLAY_USE_AMPLITUDE_CHUNK 1
+#define CONFIG_RANDOM_PLAY_USE_WAIT_TIME 0
+#define CONFIG_RANDOM_PLAY_RANDOM_PER_CHANNEL 0
 // TIMER 1 ISR
 ISR(TIMER1_COMPA_vect)
 {
@@ -308,10 +310,12 @@ ISR(TIMER1_COMPA_vect)
   {
     static int amplitudeChunk = 899;
     static float amplitude[3]  = {0, 0, 0}; // amplitude (0 - 100)
-    static float rate[3]       = {0, 0, 0}; // Hz
-    static float target[3]     = {0, 0, 0}; // Hz
-    static uint32_t  wait[3]   = {0, 0, 0}; // Samples (Seconds * sampleRate)
+    static float rate[3]       = {0, 0, 0}; // time step per sample
+    static float target[3]     = {0, 0, 0}; // amplitude (0 - 100)
+    static uint32_t wait[3]    = {0, 0, 0}; // Samples (Seconds * sampleRate)
 
+    // RANDOM_PER_CHANNEL Has r,g,b channels move on their own.
+    #if CONFIG_RANDOM_PLAY_RANDOM_PER_CHANNEL
     for (int i = 0; i < 3; i++)
     {
       // Increment or decrement our amplitude with the rate of change (time step)
@@ -323,15 +327,17 @@ ISR(TIMER1_COMPA_vect)
         continue;
       }
 
+      #if CONFIG_RANDOM_PLAY_USE_WAIT_TIME
       // If there's waiting to be done, wait
       if (wait[i])
       {
         wait[i]--;
         continue;
       }
+      #endif
 
       // Target reached. find/set new target and rate
-      #if USE_AMPLITUDE_CHUNK
+      #if CONFIG_RANDOM_PLAY_USE_AMPLITUDE_CHUNK
       amplitudeChunk += target[i];
       float newTarget = ((rand() % ((999 - amplitudeChunk) - 0 + 1) + 0) / 10.0); //(rand() % (upper - lower + 1)) + lower;
       amplitudeChunk -= newTarget;
@@ -344,6 +350,40 @@ ISR(TIMER1_COMPA_vect)
       target[i] = newTarget;
       rate[i] = newRate;
     }
+    #else
+
+    // RANDOM_PER_COLOR (!RANDOM_PER_CHANNEL) Has r,g,b channels go to a randomly selected
+    // color, rates being synchronized where all channels reach the target at the same time
+
+    // Pick random color if we reached the target 
+    if (abs((int)(amplitude[0] - target[0])) <= rate[0] && \
+        abs((int)(amplitude[1] - target[1])) <= rate[1] && \
+        abs((int)(amplitude[2] - target[2])) <= rate[2])
+    {
+      float newSeconds = ((rand() % (5000 - 1000 + 1) + 1000) / 1000.0); // Seconds
+      for (int i = 0; i < 3; i++)
+      {
+        target[i] = ((rand() % ((999 - 0) - 0 + 1) + 0) / 10.0);
+
+        // from current amplitude, go to target in $speed seconds. 
+        // distance = abs(target - amplitude)
+        // go distance in SAMPLE RATE * x seconds
+        // your rate will be distance / (SAMPLERATE * x)
+        float distance = abs((int) (amplitude[i] - target[i]));
+        rate[i] = distance / (PLAYER_SAMPLE_RATE * newSeconds);
+      }
+    }
+
+    // Progress channel by $rate[i]
+    for (int i = 0; i < 3; i++)
+    {
+      if (abs(amplitude[i] - target[i]) > rate[i])
+      {
+        (amplitude[i] < target[i]) ? (amplitude[i] += rate[i]) : (amplitude[i] -= rate[i]);
+      }
+    }
+
+    #endif
 
     analogWrite(bluePin, (uint8_t) amplitude[0]);
     analogWrite(redPin, (uint8_t) amplitude[1]);
